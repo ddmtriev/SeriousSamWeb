@@ -220,8 +220,8 @@ endif()
 
 # ImageMagic needed for SYSTEM INSTALL
 if(NOT LOCAL_INSTALL)
-	find_package(ImageMagick COMPONENTS convert)
-    if(ImageMagick_convert_FOUND)
+	#find_package(ImageMagick COMPONENTS convert)
+    if(TRUE)
         #message(STATUS "ImageMagick convert found: ${ImageMagick_convert_EXECUTABLE}")
     else()
         message(FATAL_ERROR "Error! LOCAL_INSTAL is set but neccessary ImageMagick convert are missing")

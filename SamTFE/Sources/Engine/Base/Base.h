@@ -21,13 +21,14 @@ with this program; if not, write to the Free Software Foundation, Inc.,
  */
 // be a little more discerning, using these macros will ensure that if someone
 // wants to use MINGW then they can
-#if (defined _WIN32) || (defined _WIN64) 
+// Принудительно для Emscripten / WebAssembly
+#if defined(__EMSCRIPTEN__)
+  #ifndef PLATFORM_LINUX
+    #define PLATFORM_LINUX 1
+  #endif
+#elif (defined _WIN32) || (defined _WIN64) 
   #ifndef PLATFORM_WIN32
     #define PLATFORM_WIN32 1
-  #endif
-
-  #ifndef PRAGMA_ONCE
-    #define PRAGMA_ONCE
   #endif
 
   // disable problematic warnings

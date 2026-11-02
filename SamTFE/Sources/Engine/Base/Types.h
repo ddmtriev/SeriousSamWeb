@@ -19,6 +19,58 @@ with this program; if not, write to the Free Software Foundation, Inc.,
   #pragma once
 #endif
 
+#if defined(__EMSCRIPTEN__) || defined(EMSCRIPTEN)
+    #ifndef TYPES_EMSCRIPTEN_H
+        #define TYPES_EMSCRIPTEN_H
+
+        #include <stdint.h>
+        #include <ctype.h>
+        
+        typedef uint64_t uint64;
+        typedef int64_t int64;
+        typedef unsigned long  int  ULONG;
+      
+        inline void _strupr(char *str)
+        {
+            if (str != NULL)
+            {
+                for (char *ptr = str; *ptr; ptr++)
+                   *ptr = toupper(*ptr);
+            }
+        }
+
+        inline ULONG rotl(ULONG ul, int bits)
+        {
+            #if (defined __GNU_INLINE_X86_32__)
+                // This, on the other hand, is wicked fast.  :)
+                __asm__ __volatile__ (
+                    "roll %%cl, %%eax    \n\t"
+                        : "=a" (ul)
+                        : "a" (ul), "c" (bits)
+                        : "cc"
+                );
+                return(ul);
+
+            #elif (defined __MSVC_INLINE__)
+                // MSVC version for Intel C++...
+                __asm
+                {
+                    mov eax, dword ptr [ul]
+                    mov ecx, dword ptr [bits]
+                    rol eax, cl
+                    mov dword ptr [ul], eax
+                }
+                return(ul);
+
+            #else
+                // DG: according to http://blog.regehr.org/archives/1063 this is fast
+                return (ul<<bits) | (ul>>(-bits&31));
+            #endif
+        }
+
+    #endif
+#else
+
 #if defined(_MSC_VER) && defined(PLATFORM_32BIT)
 #define __MSVC_INLINE__
 #endif
@@ -32,7 +84,7 @@ typedef signed short int    SWORD;
 typedef signed char	        SBYTE;
 typedef signed int          SINT;
 
-typedef unsigned long  int  ULONG;
+
 typedef unsigned short int  UWORD;
 typedef unsigned char       UBYTE;
 typedef unsigned int        UINT;
@@ -106,7 +158,7 @@ typedef uint32_t UINT;
 
   #define PLATFORM_64BIT 1
 
-#elif defined(__i386) || defined(_M_IX86) || defined(__arm__) || defined(_M_ARM) || defined(__POWERPC__) \
+#elif defined(__EMSCRIPTEN__) || defined(__i386) || defined(_M_IX86) || defined(__arm__) || defined(_M_ARM) || defined(__POWERPC__) \
       || defined(_M_PPC) || defined(_ARCH_PPC) || (defined(mips) && !defined(__LP64__)) || (defined(mips__) && !defined(__LP64__)) || (defined(__mips__) && !defined(__LP64__))
 
   #define PLATFORM_32BIT 1
@@ -228,7 +280,7 @@ MY_STATIC_ASSERT(size_tSize, sizeof(size_t) == sizeof(void*));
     #define _mkdir(x) mkdir(x, S_IRWXU)
     #define _open open
     #define _close close
-    #define _strupr strupr
+
     #define stricmp strcasecmp
     #define strcmpi strcasecmp
     #define strnicmp strncasecmp
@@ -263,50 +315,22 @@ MY_STATIC_ASSERT(size_tSize, sizeof(size_t) == sizeof(void*));
 
     // !!! FIXME : Should inline functions go somewhere else?
 
-    inline void _strupr(char *str)
-    {
-        if (str != NULL)
-        {
-            for (char *ptr = str; *ptr; ptr++)
-               *ptr = toupper(*ptr);
-        }
-    }
 
-    inline ULONG rotl(ULONG ul, int bits)
-    {
-        #if (defined __GNU_INLINE_X86_32__)
-            // This, on the other hand, is wicked fast.  :)
-            __asm__ __volatile__ (
-                "roll %%cl, %%eax    \n\t"
-                    : "=a" (ul)
-                    : "a" (ul), "c" (bits)
-                    : "cc"
-            );
-            return(ul);
-
-        #elif (defined __MSVC_INLINE__)
-            // MSVC version for Intel C++...
-            __asm
-            {
-                mov eax, dword ptr [ul]
-                mov ecx, dword ptr [bits]
-                rol eax, cl
-                mov dword ptr [ul], eax
-            }
-            return(ul);
-
-        #else
-            // DG: according to http://blog.regehr.org/archives/1063 this is fast
-            return (ul<<bits) | (ul>>(-bits&31));
-        #endif
-    }
-
-    typedef uint64_t __uint64;
-    #if (!defined __INTEL_COMPILER) && (!defined PLATFORM_FREEBSD) && (!defined PLATFORM_MACOSX)
-      typedef int64_t __int64;
-    #elif (!defined PLATFORM_FREEBSD) && (!defined PLATFORM_MACOSX)
-      typedef long long int // #define __INT64_TYPE__ long long int
-    #endif
+//    #ifdef __EMSCRIPTEN__
+//      // Для Emscripten вообще убираем ручные typedef-ы для int64, 
+//      // так как стандартные заголовки сами всё предоставляют
+//      #ifndef _INT64_DEFINED
+//        #define _INT64_DEFINED
+//      #endif
+//    #else
+//      // Старый код для остальных платформ оставляем под `#else`
+//      typedef uint64_t __uint64;
+//      #if (!defined __INTEL_COMPILER) && (!defined PLATFORM_FREEBSD) && (!defined PLATFORM_MACOSX)
+//        typedef int64_t __int64;
+//      #elif (!defined PLATFORM_FREEBSD) && (!defined PLATFORM_MACOSX)
+//        typedef long long int __int64;
+//      #endif
+//    #endif
 
     typedef char CHAR;
     typedef UBYTE BYTE;
@@ -373,7 +397,7 @@ MY_STATIC_ASSERT(size_tSize, sizeof(size_t) == sizeof(void*));
 #define MAX_UWORD ((UWORD)0xFFFF)
 #define MAX_UBYTE ((UBYTE)0xFF)
 
-#ifdef PLATFORM_UNIX
+#if defined(PLATFORM_UNIX) || defined(__EMSCRIPTEN__)
 typedef int32_t BOOL;		        // this is for TRUE/FALSE
 typedef int32_t RESULT;		// for error codes
 typedef int32_t INDEX;     // for indexed values and quantities
@@ -859,4 +883,8 @@ inline __uint64 BYTESWAP64_unsigned(__uint64 x)
 #endif
 
 #endif  /* include-once check. */
+
+#endif //EMSCRIPTEN
+
+
 

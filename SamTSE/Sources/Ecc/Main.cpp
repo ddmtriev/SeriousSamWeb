@@ -1,3 +1,4 @@
+#include <errno.h>
 /* Copyright (c) 2002-2012 Croteam Ltd.
 This program is free software; you can redistribute it and/or modify
 it under the terms of version 2 of the GNU General Public License as published by
@@ -315,7 +316,7 @@ int main(int argc, char *argv[])
 
   // remember input filename
   char strFullInputName[MAXPATHLEN];
-  _fullpath(strFullInputName, argv[1], MAXPATHLEN);
+  realpath(argv[1], strFullInputName);
   _strInputFileName = strFullInputName;
   TranslateBackSlashes(_strInputFileName);
   // make lex use the input file
